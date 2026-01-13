@@ -11,7 +11,9 @@ import SettingsModal from './SettingsModal';
 import PullToRefresh from './PullToRefresh';
 import { calculateHoldings } from '@/utils/portfolio-logic';
 import { calculatePortfolioHistory } from '@/utils/portfolio-history';
-import { getCachedAssetHistory, setCachedAssetHistory, getCachedFxHistory, invalidateAssetCache, clearFxCache } from '@/utils/fxCache';
+import { invalidateAssetCache, clearFxCache, getCachedAssetHistory, setCachedAssetHistory, getCachedFxHistory } from '@/utils/fxCache';
+import AIChatWindow from './ai/AIChatWindow';
+import AIFloatingButton from './ai/AIFloatingButton';
 import {
     getAllTransactions,
     getTransactionsByPortfolio,
@@ -59,6 +61,7 @@ export default function Dashboard() {
     const [isWatchlistView, setIsWatchlistView] = useState(false);
     const [watchlistAssets, setWatchlistAssets] = useState([]);
     const [watchlistSort, setWatchlistSort] = useState('custom');
+    const [isAIChatOpen, setIsAIChatOpen] = useState(false);
     const prevTimeframeRef = useRef(timeframe);
     const prevBaseCurrencyRef = useRef(baseCurrency);
     const prevBaseCurrencyQuotesRef = useRef(baseCurrency);
@@ -1331,6 +1334,17 @@ export default function Dashboard() {
                     <Search size={24} />
                 </button>
             )}
+
+            <AIFloatingButton
+                onClick={() => setIsAIChatOpen(!isAIChatOpen)}
+                isOpen={isAIChatOpen}
+            />
+
+            <AIChatWindow
+                isOpen={isAIChatOpen}
+                onClose={() => setIsAIChatOpen(false)}
+                context={{ prices, baseCurrency }}
+            />
         </>
     );
 }

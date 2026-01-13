@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Edit2, Check, X, Upload, Download, FolderOpen, ChevronDown, Star, Bell, Eye, GripVertical, Shield, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Check, X, Upload, Download, FolderOpen, ChevronDown, Star, Bell, Eye, GripVertical, Shield, FileText, ChevronRight, Bot } from 'lucide-react';
 import ConfirmModal from './ConfirmModal';
 import {
     getAllPortfolios,
@@ -45,6 +45,14 @@ export default function SettingsModal({ onClose, onPortfolioChange, currentPortf
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [notificationTime, setNotificationTime] = useState('09:00');
 
+    const [aiProvider, setAiProvider] = useState('openai');
+    const [aiKeys, setAiKeys] = useState({
+        openai: '',
+        sonar: '',
+        gemini: '',
+        claude: ''
+    });
+
     useEffect(() => {
         const init = async () => {
             const enabled = localStorage.getItem('notifications_enabled') === 'true';
@@ -60,6 +68,18 @@ export default function SettingsModal({ onClose, onPortfolioChange, currentPortf
             setNotificationTime(time);
         };
         init();
+
+        // Load AI Settings
+        const savedProvider = localStorage.getItem('ai_provider') || 'openai';
+        setAiProvider(savedProvider);
+
+        const keys = {
+            openai: localStorage.getItem('ai_key_openai') || localStorage.getItem('openai_api_key') || '',
+            sonar: localStorage.getItem('ai_key_sonar') || '',
+            gemini: localStorage.getItem('ai_key_gemini') || '',
+            claude: localStorage.getItem('ai_key_claude') || ''
+        };
+        setAiKeys(keys);
     }, []);
 
     const handleNotificationToggle = async (enabled) => {
@@ -92,6 +112,19 @@ export default function SettingsModal({ onClose, onPortfolioChange, currentPortf
     useEffect(() => {
         loadPortfolios();
     }, []);
+
+    const handleSaveAiProvider = (provider) => {
+        setAiProvider(provider);
+        localStorage.setItem('ai_provider', provider);
+    };
+
+    const handleSaveAiKey = (provider, key) => {
+        setAiKeys(prev => ({ ...prev, [provider]: key }));
+        localStorage.setItem(`ai_key_${provider}`, key);
+        if (provider === 'openai') {
+            localStorage.setItem('openai_api_key', key); // Legacy support
+        }
+    };
 
     // Handle Android back button
     useEffect(() => {
@@ -484,6 +517,7 @@ export default function SettingsModal({ onClose, onPortfolioChange, currentPortf
         { id: 'portfolios', label: 'Portfolios', icon: FolderOpen },
         { id: 'export', label: 'Export/Import', icon: Download },
         { id: 'legal', label: 'Legal', icon: Shield },
+        { id: 'ai', label: 'AI Agent', icon: Bot },
         // DISABLED: Notifications tab (uncomment when live notifications are ready)
         // { id: 'notifications', label: 'Notifications', icon: Bell }
     ];
@@ -924,6 +958,62 @@ export default function SettingsModal({ onClose, onPortfolioChange, currentPortf
                                     </div>
                                 </>
                             )}
+                        </div>
+                    )}
+                    {activeTab === 'ai' && (
+                        <div className="flex flex-col gap-4">
+                            <div className="p-4 rounded-xl" style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                <h3 className="font-bold text-white">AI Agent Settings</h3>
+                                <p className="text-xs text-blue-300/80">Manage your connection to the AI engine.</p>
+                            </div>
+
+                            <div className="flex flex-col gap-2 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <label className="text-muted text-xs font-semibold uppercase tracking-wider">AI Provider</label>
+                                <select
+                                    value={aiProvider}
+                                    onChange={(e) => handleSaveAiProvider(e.target.value)}
+                                    className="w-full bg-[#111] border border-[#333] rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer mt-1"
+                                >
+                                    <option value="openai">OpenAI</option>
+                                    <option value="gemini">Gemini</option>
+                                    <option value="claude">Claude</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-2 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <label className="text-muted text-xs font-semibold uppercase tracking-wider">
+                                    API Key ({aiProvider === 'openai' ? 'OpenAI' : aiProvider === 'gemini' ? 'Google' : 'Anthropic'})
+                                </label>
+                                <input
+                                    type="password"
+                                    value={aiKeys[aiProvider] || ''}
+                                    onChange={(e) => setAiKeys(prev => ({ ...prev, [aiProvider]: e.target.value }))}
+                                    placeholder={
+                                        aiProvider === 'gemini' ? 'AIza...' :
+                                            aiProvider === 'claude' ? 'sk-ant-...' : 'sk-...'
+                                    }
+                                    className="w-full bg-[#111] border border-[#333] rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                <p className="text-xs text-muted mt-1">Your key is stored locally in your browser and used only to analyze your portfolio.</p>
+                                <div className="flex gap-2 mt-2">
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem(`ai_key_${aiProvider}`);
+                                            setAiKeys(prev => ({ ...prev, [aiProvider]: '' }));
+                                        }}
+                                        className="flex-1 p-3 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 active:scale-[0.98] transition-all font-medium"
+                                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                                    >
+                                        Delete Key
+                                    </button>
+                                    <button
+                                        onClick={() => handleSaveAiKey(aiProvider, aiKeys[aiProvider] || '')}
+                                        className="flex-1 p-3 rounded-lg bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-semibold transition-all"
+                                    >
+                                        Save Key
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

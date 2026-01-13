@@ -12,6 +12,7 @@
     "android": "npm run build:mobile && npx cap open android"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
@@ -22,12 +23,15 @@
     "@capacitor/share": "^8.0.0",
     "@capacitor/splash-screen": "^8.0.0",
     "@capacitor/status-bar": "^8.0.0",
+    "@google/generative-ai": "^0.24.1",
     "dexie": "^4.2.1",
     "lucide-react": "^0.561.0",
     "next": "16.0.10",
+    "openai": "^6.16.0",
     "papaparse": "^5.5.3",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.6.0",
     "yahoo-finance2": "^3.11.2"
   },
